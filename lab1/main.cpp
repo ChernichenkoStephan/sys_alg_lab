@@ -70,14 +70,7 @@ void print_graph(Graph g) {
     }
 }
 
-
-
-
-bool node_init(std::string node_name, Graph *g, Node *node) {
-
-    if (duplecate_protector(g->nodes, node_name)) { return false; }
-
-    node->name = node_name;
+bool node_init( Graph *g, Node *node) {
 
     std::string entered_name;
 
@@ -110,14 +103,10 @@ bool node_init(std::string node_name, Graph *g, Node *node) {
     return true;
 }
 
-Graph graph_init() {
 
-    Graph my_graph;
+bool init_nodes_array( Graph *graph ) {
 
     std::string entered_name;
-
-    std::cout << "Enter graphs name" << '\n';
-    std::cin >> my_graph.name;
 
     printf("\n============================\n");
     unsigned short index = 1;
@@ -126,8 +115,9 @@ Graph graph_init() {
 
     while (entered_name != "_") {
         Node node;
-        if (node_init(entered_name, &my_graph, &node)) {
-            my_graph.nodes.push_back(node);
+        if (!duplecate_protector(graph->nodes, entered_name)) {
+            node.name = entered_name;
+            graph->nodes.push_back(node);
         } else {
             printf("\033[0;31mError node already exists\033[0m\n");
         }
@@ -140,7 +130,53 @@ Graph graph_init() {
 
     }
 
-    return my_graph;
+    return true;
+}
+
+bool nodes_init( Graph *graph ) {
+
+    bool res = true;
+
+    for ( unsigned short i = 0; i < graph->nodes.size(); i++ ) {
+        // Node node : graph->nodes
+        std::cout << "-------------- Node: " << graph->nodes[i].name << " --------------\n" << '\n';
+        if (!node_init( graph, &(graph->nodes[i]))) { return false; }
+
+    }
+
+    return res;
+
+}
+
+bool graph_init( Graph *graph ) {
+
+    std::cout << "Enter graphs name" << '\n';
+    std::cin >> graph->name;
+
+    printf("\033[0;34m--------- NODES ARRAY INITIALIZATION ---------\033[0m\n");
+
+    if (!init_nodes_array( graph )) { return false; }
+
+    printf("\033[0;34m--------- NODES INITIALIZATION ---------\033[0m\n");
+
+    if (!nodes_init( graph )) { return false; }
+
+    return true;
+
+}
+
+
+std::vector<int> get_links_count_array(Graph graph) {
+
+    int index = 0;
+
+    std::vector<int> res;
+
+    for ( Node node : graph.nodes ) {
+        res.push_back(node.linked_nodes.size());
+    }
+
+    return res;
 
 }
 
@@ -149,9 +185,20 @@ int main(int argc, char **argv) {
 
     std::cout << "/* Start */" << '\n';
 
-    Graph g = graph_init();
+    Graph my_graph;
 
-    print_graph(g);
+    if (graph_init(&my_graph)) {
+        printf("\033[0;34m\n--------- GRAPH INITIALIZATION SUCCESS---------\033[0m\n\n");
+        print_graph(my_graph);
+    } else {
+        printf("SUCCESS\n");
+    }
+
+    std::vector<int> links_count_array = get_links_count_array(my_graph);
+
+    for ( int node_links : links_count_array) {
+        std::cout << node_links << '\n';
+    }
 
     std::cout << "/* End */" << '\n';
 
