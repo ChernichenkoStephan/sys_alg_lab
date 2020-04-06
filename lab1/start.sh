@@ -7,4 +7,5 @@ clear
 # ./test 17600
 
 # task 2
-g++ -o test2 main.cpp && ./test2
+
+g++ -w -o test2 main.cpp && ./test2
