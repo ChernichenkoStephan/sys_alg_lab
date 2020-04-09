@@ -40,11 +40,47 @@ struct Tree {
     int size = 0;
 };
 
-std::string getWeight( Node* node ) {
+std::string get_string_weight( std::vector<int> w ) {
     std::string res = "";
-    for (int num : node->weight) {
-        /* code */
+    for (int num : w) {
+        res += std::to_string(num) + " ";
     }
+    return res;
+}
+
+
+int compear( std::vector<int> n1_weight, std::vector<int> n2_weight ) {
+
+    for ( unsigned short i = 0; i < n1_weight.size(); i++ ) {
+        if (n1_weight[i] > n2_weight[i]) {
+            return 1;
+        } else if(n1_weight[i] < n2_weight[i]) {
+            return -1;
+        }
+    }
+    return 0;
+
+}
+
+std::vector<int> get_weight( std::string weight_str ) {
+    int num = 999;
+    std::vector<int> res;
+
+    try {
+       num = stoi(weight_str);
+    }
+    catch (std::invalid_argument) {
+        num = INT_MIN;
+    }
+
+    if ( num == INT_MIN ) {
+        for ( char c : weight_str ) {
+            res.push_back(c);
+        }
+    } else {
+        res.push_back(num);
+    }
+
     return res;
 }
 
@@ -52,29 +88,13 @@ std::string getWeight( Node* node ) {
 bool enter_node( Node *node ) {
 
     printf("\nNode name: ");
-    counter++;
 
     std::cin >> node->name;
     if (node->name == "_") { return false; }
 
-    int num;
+    node->weight = get_weight(node->name);
 
-    try {
-       int num = stoi(node->name);
-    }
-    catch (std::invalid_argument) {
-        num = INT_MIN;
-    }
-
-    if ( num == INT_MIN ) {
-        for ( char c : node->name ) {
-            node->weight.push_back(c);
-            // node->number = (int)char;
-        }
-    } else {
-        node->weight.push_back(num);
-    }
-    std::cout << "New node name: " << node->name << " New node weight size: " << node->weight.size() << '\n';
+    std::cout << "New node name: " << node->name << " New node weight: " << get_string_weight(node->weight) << '\n';
 
     return true;
 }
@@ -99,7 +119,8 @@ bool init_node( Node *node ) {
 
          // Checking if first node was lighter
          if ( i == 1) {
-             if (node->children[0]->weight[0] > new_node->weight[0]) {
+
+             if (compear( node->children[0]->weight, new_node->weight ) == 1) {
 
                  std::cout << "\033[0;31m\nSecond child shuld be heavier than first\033[0m\n"
                            << "Fist w8: " << node->children[0]->weight[0] << " name: " << node->children[0]->name
@@ -153,8 +174,9 @@ bool node_print( Node* node, int level ) {
      for (int i = 0; i < level; i++) {
          indentation += "\t";
      }
-    std::cout << '\n' << indentation << "---------- Node: " << node->name << node->weight.size() << " ----------\n"
-    << indentation << "Children nodes:" << '\n';
+    std::cout << '\n' << indentation << "---------- Node: " << node->name
+                                             << " weight: " << get_string_weight(node->weight) << " ----------\n"
+                                                            << indentation << "Children nodes:" << '\n';
 
     level++;
     for (Node *node : node->children) {
@@ -163,24 +185,6 @@ bool node_print( Node* node, int level ) {
 
     return true;
 }
-
-
-/*
-
-T:
-            A
-      B            C
-    D    E      F    G
-H    I J   K   L  M N  O
-
-
-T2:
-        1
-  2          3
-4   5     6    7
-
-
-*/
 
 bool tree_print( Tree *tree ) {
 
@@ -220,12 +224,87 @@ bool clear_memory( Tree* tree ) {
 
 }
 
+/*
+
+Требуется по бинарному дереву отыскать ключ SAG.
+При просмотре от корня дерева видно, что по первой
+букве латинского алфави- та название SAG больше чем САР.
+Следовательно, дальнейший поиск будем осуществлять
+в правой ветви. Это слово больше, чем PIS - снова идем вправо;
+ оно меньше, чем TAU - идем влево; оно меньше,
+ чем SCO, и попадаем в узел 8. Таким образом,
+ название SAG должно находиться в узле 8.
+
+*/
+
+/*
+
+T:
+            A
+      B            C
+    D    E      F    G
+H    I J   K   L  M N  O
+
+
+T2:
+        1
+  2          3
+4   5     6    7
+
+
+Node search(x : Node, k : T):
+   if x == null or k == x.key
+      return x
+   if k < x.key
+      return search(x.left, k)
+   else
+      return search(x.right, k)
+
+
+*/
+
+Node* binary_tree_search( Tree *tree, std::string key ) {
+
+    Node *node = tree->root;
+
+    std::vector<int> key_weight = get_weight( key );
+
+    int diff = compear(key_weight, node->weight);
+
+    for (unsigned short i = 0; i < 1000; i++) {
+
+        std::cout << "key_weight:" << get_string_weight(key_weight) << "|node->weight:" << get_string_weight(node->weight) << '\n';
+        std::cout << "diff:" << diff << '\n';
+        if ( diff == 0 ) {
+            std::cout << "\033[0;32mKEY FOUND\033[0m" << '\n';
+            return node;
+        } else if ( diff == 1 ) {
+            node = node->children[node->children.size() - 1];
+            std::cout << "Go to node: "<< node->name << '\n';
+        } else if ( diff == -1 ) {
+            node = node->children[0];
+            std::cout << "Go to node: "<< node->name << '\n';
+        }
+
+        diff = compear(key_weight, node->weight);
+
+    }
+
+    std::cout << "\033[0;31mKEY NOT FOUND\033[0m" << '\n';
+    return NULL;
+
+}
+
+
 
 int main(int argc, char **argv) {
+
+    system("clear");
 
     Tree *my_tree = new Tree;
 
     printf("\033[0;34m--------- TREE INITIALIZATION ---------\033[0m\n");
+
 
     if (!init_tree( my_tree )) {
         printf("\033[0;31mTree init error\033[0m\n");
@@ -234,6 +313,13 @@ int main(int argc, char **argv) {
     if (!tree_print( my_tree )) {
         printf("\033[0;31mTree print error\033[0m\n");
     }
+
+    std::string key;
+
+    std::cout << "Enter the key: ";
+    std::cin >> key;
+
+    binary_tree_search( my_tree, key );
 
     if (!clear_memory( my_tree )) {
         printf("\033[0;31mTree was empty, or was not exist.\033[0m\n");
