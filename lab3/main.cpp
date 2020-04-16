@@ -114,8 +114,7 @@ Res expression_is_correct ( char *c, Stack *brackets, char prew ) {
 			break;
 		case '#':
 			// if it is last character
-			return Res(is_empty(brackets), is_empty(brackets), '\0');
-		case ' ':
+		case 0:
 			// if it is last entered character
 			return Res(is_empty(brackets), is_empty(brackets), '\0');
 		default:
@@ -141,9 +140,9 @@ int main(int argc, char **argv) {
     system("clear");
 
 	std::string str_exp;
-	std::string str_exp1 = "a+b+((c*d)#";
-	std::string str_exp2 = "a+b+(c*d)#";
-	std::string str_exp3 = "a+b+(c*d))#";
+	std::string str_exp1 = "a+b+((c*d)\0";
+	std::string str_exp2 = "a+b+(c*d)\0";
+	std::string str_exp3 = "a+b+(c*d))\0";
 	Stack brackets = Stack();
 	Stack brackets1 = Stack();
 	Stack brackets2 = Stack();
