@@ -7,10 +7,124 @@
 #include <ctime>
 #include <chrono>
 #include <limits.h>
+#include <cmath>
 
+#define MAX_U_L_L_INT 4294967296
 #define FIRST_INDEX 1
 #define END_INDEX argc - 1
 #define ARRAY_SIZE (argc - 1)
+
+
+
+std::vector<int> GenerateArray(unsigned int array_size, unsigned int seed) {
+  srand(seed);
+
+  std::vector<int> res;
+
+  for (int i = 0; i < array_size; i++) {
+    res.push_back(rand() % 1000);
+  }
+
+  return res;
+}
+
+void swap_nums (int *a, int *b) {
+    *a += *b;
+    *b = *a - *b;
+    *a = *a - *b;
+}
+
+bool isSorted(std::vector<int> array) {
+    for (int i = 0; i < array.size() - 1; i++) {
+        if (array[i] > array[i+1]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void shell_sort( std::vector<int> *array ) {
+
+    /*
+
+    В методе Шелла сравниваются не соседние элементы, а элементы, расположенные
+    на расстоянии d (где d - шаг между сравниваемыми элементами): d = [n/2].
+    После каждого просмотра шаг d уменьшается вдвое. На последнем просмотре он
+    сокращается до d = 1.
+
+    */
+    unsigned int array_size = (*array).size();
+    unsigned int step = array_size / 2;
+    unsigned long steps = 0;
+    bool iverson;
+
+
+
+    do {
+        unsigned int index = 0;
+        iverson = true;
+
+        while ( index < (array_size - step) ) {
+
+            if ((*array)[index] > (*array)[index + step]) {
+                swap_nums (&(*array)[index], &(*array)[index + step]);
+                iverson = false;
+            }
+
+            index++;
+
+            /* Error protection */
+            if (index > 2147483647) {
+                iverson = true;
+                break;
+            }
+
+        }
+
+        steps++;
+
+        if (step != 1 ) { step /= 2; }
+
+    } while (!iverson);
+
+    std::cout << "Steps: " << steps << '\n';
+
+
+}
+
+void print_array( std::vector<int> array ) {
+
+    std::cout << array[0];
+
+    for (int i = 1; i < array.size(); i++) {
+        std::cout <<  ", " << array[i];
+    }
+
+}
+
+
+std::vector<int> input_array ( char **input_array, unsigned int array_size ) {
+
+    std::vector<int> res;
+
+    for (int i = 1; i <= array_size; i++) {
+        res.push_back(atoi(input_array[i]));
+    }
+
+    return res;
+
+}
+
+
+
+// -------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
+// ------------------------        Task 2         --------------------------------
+// -------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
+
+
+
 
 
 struct Node {
@@ -269,16 +383,131 @@ bool topological_sort(std::vector<int> res_array, int tail, Graph *graph) {
 }
 
 
+/*----------------------------------------------------------------------------*/
 
 
+struct PResult {
+    double left;
+    double right;
 
+    PResult(double l, double r) {
+		left = l;
+		right = r;
+    }
+	PResult() {
+        left = 0;
+		right = 0;
+    }
+};
+
+long power(long num, int degree) {
+	if (degree - 1 == 0) { return num; }
+	num *= power(num, degree - 1 );
+	return num;
+}
+
+size_t number_digit (int number) {
+    std::string s = std::to_string(number);
+    return s.size();
+}
+
+unsigned long long int square_rand( int seed, size_t steps ) {
+
+    if (seed < 10 || seed > MAX_U_L_L_INT ) { return 0; }
+
+    unsigned long long int x = seed;
+    int k = number_digit(seed);
+    int r_board = power(10, k/2);
+
+    for (size_t i = 0; i < steps; i++) {
+        int y = power(x, 2);
+        x = y / r_board;
+        if (number_digit(x) > k) {
+            int l_board = power(10, k);
+            x %= l_board;
+        }
+    }
+    return x;
+}
+
+PResult polar_rand(int seed) {
+
+    if (seed < 10 || seed > MAX_U_L_L_INT ) { printf("ERROR 1\n");return PResult(); }
+
+    double u1, u2, v1, v2, s;
+    size_t step = 0;
+
+
+    do {
+        step++;
+        u1 = static_cast<double>(square_rand( seed, step )) / power(10, number_digit(seed));
+        u2 = static_cast<double>(square_rand( seed, step + 1 )) / power(10, number_digit(seed));
+
+        v1 = 2 * u1 - 1;
+        v2 = 2 * u2 - 1;
+
+        s = v1 * v1 + v2 * v2;
+
+        if (s <= 1) {
+            double n1 = v1*sqrt((-2 * log(s) / s));
+            double n2 = v2*sqrt((-2 * log(s) / s));
+
+            return PResult(n1, n2);
+        }
+
+        if (step > 1000) {  printf("ERROR 2\n");break; } // error protection
+
+    } while (true);
+
+    return PResult();
+
+}
 
 /*----------------------------------------------------------------------------*/
 
 
 int main(int argc, char **argv) {
 
-    std::cout << "/* Start */" << '\n';
+    std::cout << "\n\nTASK 1(SHELL SORT):\n";
+    auto now = time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now());
+
+    std::vector<int> array;
+
+    unsigned int array_size = 20;
+
+    if (argc < 3) {
+        std::cout << "\n----------- Using default generation -----------" << '\n';
+        if (argc == 2) {
+            if ( atoi(argv[FIRST_INDEX]) ) { array_size = atoi(argv[FIRST_INDEX]); }
+        }
+        array = GenerateArray( array_size, 9 );
+    } else {
+        array_size = ARRAY_SIZE;
+        array = input_array(argv, array_size);
+    }
+
+    if ( (ARRAY_SIZE % 2) != 0 && (array_size %2) != 0 ) {
+        std::cout << "array should be even" << '\n';
+        return 1;
+    }
+
+    std::cout << "ARRAY SIZE: " << array_size <<'\n';
+
+
+    shell_sort( &array );
+
+    if (isSorted(array)) { std::cout << "Sorted\n\n\n" << '\n'; }
+
+
+    if (array_size < 50) {
+        print_array( array );
+    }
+
+    std::cout << "\n\nTime to algorithm (microseconds): "
+     << (time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()) - now).count();
+
+
+    std::cout << "/* Start task 2 */" << '\n';
 
     Graph my_graph;
 
@@ -306,6 +535,12 @@ int main(int argc, char **argv) {
     if(!topological_sort(q_array, tail, &my_graph)) { printf("Sort fault\n"); }
 
     std::cout << "/* End */" << '\n';
+
+
+    for (size_t i = 1; i < 10; i++) {
+        PResult res = polar_rand(423 * i);
+        printf("i%d) n1: %f, n2: %f\n", i, res.left, res.right);
+    }
 
     return 0;
 }
