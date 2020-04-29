@@ -230,7 +230,7 @@ bool graph_init( Graph *graph ) {
 
 }
 
-bool is_exist(int *array, int element, int count) {
+bool is_exist( int *array, int element, int count ) {
 
     for (unsigned short i = 0; i < count; i++) {
         if (array[i] == count) { return true; }
@@ -241,80 +241,112 @@ bool is_exist(int *array, int element, int count) {
 
 // ------------------------ Kruskal method ------------------------
 
-// ------------------------ Sort for links ------------------------
 
-void swap_elements (void *l, void *r) {
-	void* container = l;
-	l = r;
-	r = container;
-}
-
-void shell_links_sort( std::vector<Link> *array ) {
-
-    unsigned int array_size = (*array).size();
-    unsigned int step = array_size / 2;
-    unsigned long steps = 0;
-    bool iverson;
-
-    do {
-        unsigned int index = 0;
-        iverson = true;
-
-        while ( index < (array_size - step) ) {
-            if ((*array)[index] > (*array)[index + step]) {
-                swap_nums (&(*array)[index], &(*array)[index + step]);
-                iverson = false;
-            }
-            index++;
-            /* Error protection */
-            if (index > 2147483647) {
-                iverson = true;
-                break;
-            }
-        }
-        steps++;
-        if (step != 1 ) { step /= 2; }
-
-    } while (!iverson);
-
-}
-
-// ===============
-
-
-
-struct Plurality {
+struct Plurality_Node {
 	std::vector<void*> elements;
+	Plurality_Node* next;
 };
 
+Plurality_Node* get_pluraluty ( void* element, Plurality_Node *head ) {
+	Plurality_Node *current = head;
+	while (current->next != NULL) {
+		for (auto e : current->elements) {
+			if (e == element) {
+				return current;
+			}
+		}
+		current = current->next;
+	}
+	return NULL;
+}
+
+bool delete_plurality ( Plurality_Node *p, Plurality_Node *head ) {
+	Plurality_Node *current = head;
+	while (current->next != NULL) {
+		if (p == current->next) {
+
+			Plurality_Node *prew = p;
+			Plurality_Node *deleting = current->next;
+			Plurality_Node *next = deleting->next;
+
+			prew->next = next;
+			free(deleting);
+
+			return true;
+		}
+		current = current->next;
+	}
+	return false;
+}
+
+void include_link( Plurality_Node *head, Plurality_Node *first, Plurality_Node *second, Link link, Graph *graph ) {
+
+	// transportiong all nodes between pluralities
+	for (void *e : second->elements) {
+		first->elements.push_back(e);
+	}
+
+	// deleting second
+	delete_plurality(second, head);
+
+	// adding link to graph
+	graph->links.push_back(link);
+
+	// linking nodes
+	Node *source_node = get_node_by_name(link.left->name, graph);
+	int receive_node_index = get_node_index_by_name(link.right->name, graph);
+
+	if ( source_node && receive_node_index != INT_MIN ) {
+		source_node->linked_nodes_indexes.push_back(receive_node_index);
+		printf("\033[0;32mNode linked in Ostov\033[0m\n");
+	} else {
+		printf("\033[0;31m Node linking in Ostov Error \033[0m\n");
+	}
+
+}
 
 
-Graph get_ostov_kruskal ( Graph *g ) {
 
-	Graph res_g;
-	std::vector<Plurality> pluralities;
+Graph get_skeleton_kruskal ( Graph *g ) {
+
+	Graph skeleton;
+	int skeleton_weight = 0;
+	Plurality_Node* head_plurality = new Plurality_Node();
+	Plurality_Node* current_plurality = head_plurality;
 	std::vector<Node> nodes = g->nodes;
 	std::vector<Link> links = g->links;
 
 	// starts array of pluralities
-	for ( Node n : nodes ) {
-		Plurality p;
-		p.elements.push_back(&n);
-		pluralities.push_back(p);
+	for (Node n : nodes) {
+		// filling plurality
+		current_plurality->elements.push_back(&n);
+
+		// making new plurality, connecting it into previous one, and moving to it
+		Plurality_Node* new_plurality = new Plurality_Node();
+		current_plurality->next = new_plurality;
+		current_plurality = new_plurality;
 	}
 
-	std::sort(links, compare_links);
-    cout << "Links sorted by weight: \n";
-    for (auto l : links)
-        cout << l.name << " " << l.weight << '\n';
+	std::sort(links.begin(), links.end(), compare_links);
 
+	int cyclomatic_number = links.size() - nodes.size() + 1;
 
+	for (Link l : links) {
+		Plurality_Node *first = get_pluraluty(l.right, head_plurality);
+		Plurality_Node *second = get_pluraluty(l.left, head_plurality);
+		if ( first != second ) {
+			include_link(head_plurality, first, second, l, &skeleton);
+			skeleton_weight++;
+		}
+	}
 
+	std::cout << "OSTOW WEIGHT: "<< skeleton_weight << '\n';
+	return skeleton;
 }
 
 // ------------------------ Prim method ------------------------
 
-Graph get_ostov_prim ( Graph g ) {
+Graph get_skeleton_prim ( Graph g ) {
 	Graph res_g;
 }
 
@@ -332,6 +364,8 @@ int main(int argc, char **argv) {
     } else {
         printf("SUCCESS\n");
     }
+
+	get_skeleton_kruskal ( &my_graph );
 
 
     return 0;
