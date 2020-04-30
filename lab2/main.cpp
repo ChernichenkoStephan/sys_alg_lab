@@ -9,6 +9,11 @@
 #include <limits.h>
 
 
+#include <unistd.h> //  for_test
+
+
+struct Link;
+
 struct Node {
     std::string name;
     std::vector<int> linked_nodes_indexes;
@@ -52,9 +57,10 @@ Node* get_node_by_name( std::string name, Graph *g ) {
     return NULL;
 }
 
-std::vector<Link> get_links_array ( Node node, Graph g ) {
+// std::vector<Link> get_links_array ( Node node, Graph g ) {
+std::vector<Link> get_links_array ( Node node, std::vector<Link> links ) {
 	std::vector<Link> res;
-	for ( Link l : g.links ) {
+	for ( Link l : links ) {
 		if (l.right->name == node.name || l.left->name == node.name) {
 			res.push_back(l);
 		}
@@ -81,7 +87,7 @@ void print_node ( Graph g ) {
         }
 
 		std::cout << "\n\tlinks of node:\n";
-		std::vector<Link> links_array = get_links_array(n, g);
+		std::vector<Link> links_array = get_links_array(n, g.links);
         if (links_array.empty()) { printf("\tempty\n"); }
         for (Link l : links_array) {
             std::cout << "\t" << l.name <<'\n';
@@ -239,6 +245,83 @@ bool is_exist( int *array, int element, int count ) {
     return false;
 }
 
+// ------------------------ Graph for test ------------------------
+
+Graph* set_test_graph ( Graph *my_graph ) {
+
+	Node *a = new Node();
+	Node *b = new Node();
+	Node *c = new Node();
+	Node *d = new Node();
+	Link *l1 = new Link();
+	Link *l2 = new Link();
+	Link *l3 = new Link();
+	Link *l4 = new Link();
+	Link *l5 = new Link();
+	Link *l6 = new Link();
+
+	a->name = "A";
+	b->name = "B";
+	c->name = "C";
+	d->name = "D";
+	a->linked_nodes_indexes.push_back(1);
+	a->linked_nodes_indexes.push_back(2);
+	b->linked_nodes_indexes.push_back(2);
+	c->linked_nodes_indexes.push_back(3);
+	d->linked_nodes_indexes.push_back(0);
+	d->linked_nodes_indexes.push_back(1);
+	// std::vector<int> linked_nodesA_indexes = [];
+	// std::vector<int> linked_nodesB_indexes = [];
+	// std::vector<int> linked_nodesC_indexes = [];
+
+	l1->name = "l1";
+	l2->name = "l2";
+	l3->name = "l3";
+	l4->name = "l4";
+	l5->name = "l5";
+	l6->name = "l6";
+
+	l1->weight = 1;
+	l2->weight = 2;
+	l3->weight = 3;
+	l4->weight = 4;
+	l5->weight = 5;
+	l6->weight = 6;
+
+	l1->left = a;
+	l1->right = b;
+
+	l2->left = b;
+	l2->right = c;
+
+	l3->left = c;
+	l3->right = d;
+
+	l4->left = d;
+	l4->right = a;
+
+	l5->left = a;
+	l5->right = c;
+
+	l6->left = d;
+	l6->right = b;
+
+
+	my_graph->name = "G";
+	my_graph->nodes.push_back(*a);
+	my_graph->nodes.push_back(*b);
+	my_graph->nodes.push_back(*c);
+	my_graph->nodes.push_back(*d);
+	my_graph->links.push_back(*l1);
+	my_graph->links.push_back(*l2);
+	my_graph->links.push_back(*l3);
+	my_graph->links.push_back(*l4);
+	my_graph->links.push_back(*l5);
+	my_graph->links.push_back(*l6);
+
+	return my_graph;
+}
+
 // ------------------------ Kruskal method ------------------------
 
 
@@ -324,7 +407,6 @@ void print_plurality(Plurality_Node *p) {
 }
 
 
-
 Graph get_skeleton_kruskal ( Graph *g ) {
 
 	Graph skeleton;
@@ -353,7 +435,7 @@ Graph get_skeleton_kruskal ( Graph *g ) {
 
 	int cyclomatic_number = links.size() - skeleton.nodes.size() + 1;
 
-	for( Link l : links ) {
+	for ( Link l : links ) {
 		std::cout << "Link: " << l.name << '\n';
 	}
 
@@ -374,7 +456,7 @@ Graph get_skeleton_kruskal ( Graph *g ) {
 
 	// plural_p(head_plurality);
 
-	for( Link l : skeleton.links ) {
+	for ( Link l : skeleton.links ) {
 		std::cout << "Link: " << l.name << '\n';
 	}
 
@@ -385,84 +467,109 @@ Graph get_skeleton_kruskal ( Graph *g ) {
 
 // ------------------------ Prim method ------------------------
 
-Graph get_skeleton_prim ( Graph g ) {
-	Graph res_g;
+Link get_lightest ( std::vector<Link> array ) {
+	int min_weight = INT_MAX;
+	Link res;
+	for (Link l : array) {
+		if (l.weight < min_weight) {
+			res = l;
+			min_weight = l.weight;
+		}
+	}
+	return res;
 }
 
-Graph* set_test_graph ( Graph *my_graph ) {
-
-	Node *a = new Node();
-	Node *b = new Node();
-	Node *c = new Node();
-	Node *d = new Node();
-	Link *l1 = new Link();
-	Link *l2 = new Link();
-	Link *l3 = new Link();
-	Link *l4 = new Link();
-	Link *l5 = new Link();
-	Link *l6 = new Link();
-
-	a->name = "A";
-	b->name = "B";
-	c->name = "C";
-	d->name = "D";
-	a->linked_nodes_indexes.push_back(1);
-	a->linked_nodes_indexes.push_back(2);
-	b->linked_nodes_indexes.push_back(2);
-	c->linked_nodes_indexes.push_back(3);
-	d->linked_nodes_indexes.push_back(0);
-	d->linked_nodes_indexes.push_back(1);
-	// std::vector<int> linked_nodesA_indexes = [];
-	// std::vector<int> linked_nodesB_indexes = [];
-	// std::vector<int> linked_nodesC_indexes = [];
-
-	l1->name = "l1";
-	l2->name = "l2";
-	l3->name = "l3";
-	l4->name = "l4";
-	l5->name = "l5";
-	l6->name = "l6";
-
-	l1->weight = 1;
-	l2->weight = 2;
-	l3->weight = 3;
-	l4->weight = 4;
-	l5->weight = 5;
-	l6->weight = 6;
-
-	l1->left = a;
-	l1->right = b;
-
-	l2->left = b;
-	l2->right = c;
-
-	l3->left = c;
-	l3->right = d;
-
-	l4->left = d;
-	l4->right = a;
-
-	l5->left = a;
-	l5->right = c;
-
-	l6->left = d;
-	l6->right = b;
-
-
-	my_graph->name = "G";
-	my_graph->nodes.push_back(*a);
-	my_graph->nodes.push_back(*b);
-	my_graph->nodes.push_back(*c);
-	my_graph->nodes.push_back(*d);
-	my_graph->links.push_back(*l1);
-	my_graph->links.push_back(*l2);
-	my_graph->links.push_back(*l3);
-	my_graph->links.push_back(*l4);
-	my_graph->links.push_back(*l5);
-	my_graph->links.push_back(*l6);
-
-	return my_graph;
+bool link_duplecate_protector ( Link link, Graph g ) {
+	for (Link l : g.links)
+		if (link.name == l.name)
+			return true;
+	return false;
 }
+
+std::vector<Link> remove_link ( std::vector<Link> array, Link link ) {
+	std::vector<Link> new_array;
+	for (Link l : array) {
+		if (l.name == link.name) { continue; }
+		new_array.push_back(l);
+	}
+
+	return new_array;
+}
+
+
+Graph get_skeleton_prim ( Graph *g ) {
+
+	Graph skeleton;
+	skeleton.name = "skeleton";
+	int skeleton_weight = 0;
+
+	std::vector<Link> links = g->links;
+
+	Link lite = get_lightest(g->links);
+
+	skeleton.nodes.push_back(*lite.left);
+	skeleton.nodes.push_back(*lite.right);
+	skeleton.links.push_back(lite);
+	links = remove_link( links, lite );
+
+	while ( g->nodes.size() != skeleton.nodes.size() ) {
+
+		for (size_t j = 0; j < skeleton.nodes.size(); j++) {
+
+			if (g->nodes.size() == skeleton.nodes.size()) { break; }
+
+			Node n = skeleton.nodes[j];
+			lite = get_lightest(get_links_array(n, links));
+
+			// find lightest from the vector before we get link, that connecting graph with new node
+			while (duplecate_protector( skeleton.nodes, lite.left->name )
+			 	&& duplecate_protector( skeleton.nodes, lite.right->name ) ) {
+						// removing link that makes cycle
+						links = remove_link( links, lite );
+						lite = get_lightest(get_links_array(n, links));
+
+			}
+
+			if (duplecate_protector( skeleton.nodes, lite.right->name )) {
+				skeleton.nodes.push_back(*lite.left);
+				skeleton.links.push_back(lite);
+				links = remove_link( links, lite );
+				std::cout << lite.left-> name << " added" << '\n';
+				break;
+			} else {
+				skeleton.nodes.push_back(*lite.right);
+				skeleton.links.push_back(lite);
+				links = remove_link( links, lite );
+				std::cout << lite.right-> name << " added" << '\n';
+				break;
+			}
+
+			/*
+
+			The problem is that we adding not lightest in graph,
+			but lightest in first observed node
+
+			*/
+
+
+		}
+	}
+
+
+
+
+	for ( Link l : skeleton.links ) {
+		std::cout << "Link: " << l.name << '\n';
+	}
+
+
+
+
+	std::cout << "OSTOW WEIGHT: "<< skeleton_weight << '\n';
+	return skeleton;
+}
+
+
 
 int main(int argc, char **argv) {
 
@@ -481,9 +588,18 @@ int main(int argc, char **argv) {
     // } else {
     //     printf("SUCCESS\n");
     // }
+	// my_graph = get_skeleton_kruskal ( &my_graph );
 
-	my_graph = get_skeleton_kruskal ( &my_graph );
-	print_graph(my_graph);
+	// print_graph(my_graph);
+	my_graph = get_skeleton_prim ( &my_graph );
+	// print_graph(my_graph);
+
+	// for (size_t i = 0; i < INT_MAX; i++) {
+	// 	for (size_t j = 0; j < INT_MAX; j++) {
+	// 		int p = 0;
+	// 		p++;
+	// 	}
+	// }
 
     return 0;
 }
