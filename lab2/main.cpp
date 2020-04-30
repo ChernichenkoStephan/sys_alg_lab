@@ -23,7 +23,7 @@ struct Link {
 };
 
 bool compare_links(Link l, Link r) {
-	return l.weight > r.weight;
+	return l.weight < r.weight;
 }
 
 struct Graph {
@@ -243,15 +243,16 @@ bool is_exist( int *array, int element, int count ) {
 
 
 struct Plurality_Node {
-	std::vector<void*> elements;
+	int index; // test
+	std::vector<Node> elements;
 	Plurality_Node* next;
 };
 
-Plurality_Node* get_pluraluty ( void* element, Plurality_Node *head ) {
+Plurality_Node* get_pluraluty ( Node element, Plurality_Node *head ) {
 	Plurality_Node *current = head;
 	while (current->next != NULL) {
-		for (auto e : current->elements) {
-			if (e == element) {
+		for (Node e : current->elements ) {
+			if (e.name == element.name) {
 				return current;
 			}
 		}
@@ -265,7 +266,7 @@ bool delete_plurality ( Plurality_Node *p, Plurality_Node *head ) {
 	while (current->next != NULL) {
 		if (p == current->next) {
 
-			Plurality_Node *prew = p;
+			Plurality_Node *prew = current;
 			Plurality_Node *deleting = current->next;
 			Plurality_Node *next = deleting->next;
 
@@ -282,7 +283,7 @@ bool delete_plurality ( Plurality_Node *p, Plurality_Node *head ) {
 void include_link( Plurality_Node *head, Plurality_Node *first, Plurality_Node *second, Link link, Graph *graph ) {
 
 	// transportiong all nodes between pluralities
-	for (void *e : second->elements) {
+	for (Node e : second->elements) {
 		first->elements.push_back(e);
 	}
 
@@ -297,12 +298,29 @@ void include_link( Plurality_Node *head, Plurality_Node *first, Plurality_Node *
 	int receive_node_index = get_node_index_by_name(link.right->name, graph);
 
 	if ( source_node && receive_node_index != INT_MIN ) {
+
+		// refresh nodes links
+		std::vector<int> new_links;
+		source_node->linked_nodes_indexes = new_links;
+
 		source_node->linked_nodes_indexes.push_back(receive_node_index);
 		printf("\033[0;32mNode linked in Ostov\033[0m\n");
 	} else {
 		printf("\033[0;31m Node linking in Ostov Error \033[0m\n");
 	}
 
+}
+
+void print_plurality(Plurality_Node *p) {
+
+	Plurality_Node *current = p;
+	while (current->next != NULL) {
+		std::cout << "Plurality: " << current->index << '\n';
+		for (auto e : current->elements) {
+			std::cout << e.name << '\n';
+		}
+		current = current->next;
+	}
 }
 
 
@@ -313,32 +331,53 @@ Graph get_skeleton_kruskal ( Graph *g ) {
 	int skeleton_weight = 0;
 	Plurality_Node* head_plurality = new Plurality_Node();
 	Plurality_Node* current_plurality = head_plurality;
-	std::vector<Node> nodes = g->nodes;
+	skeleton.nodes = g->nodes;
 	std::vector<Link> links = g->links;
 
 	// starts array of pluralities
-	for (Node n : nodes) {
+	for (size_t i = 0; i < skeleton.nodes.size(); i++) {
 		// filling plurality
-		current_plurality->elements.push_back(&n);
+		current_plurality->elements.push_back(skeleton.nodes[i]);
+		current_plurality->index = i; // test
 
 		// making new plurality, connecting it into previous one, and moving to it
-		Plurality_Node* new_plurality = new Plurality_Node();
+		Plurality_Node *new_plurality = new Plurality_Node();
 		current_plurality->next = new_plurality;
 		current_plurality = new_plurality;
 	}
 
+	print_plurality(head_plurality);
+
+	// sorting liks
 	std::sort(links.begin(), links.end(), compare_links);
 
-	int cyclomatic_number = links.size() - nodes.size() + 1;
+	int cyclomatic_number = links.size() - skeleton.nodes.size() + 1;
+
+	for( Link l : links ) {
+		std::cout << "Link: " << l.name << '\n';
+	}
 
 	for (Link l : links) {
-		Plurality_Node *first = get_pluraluty(l.right, head_plurality);
-		Plurality_Node *second = get_pluraluty(l.left, head_plurality);
+
+		Plurality_Node *first = get_pluraluty(*l.left, head_plurality);
+		Plurality_Node *second = get_pluraluty(*l.right, head_plurality);
+
 		if ( first != second ) {
+			// std::cout << "ADD LINK" << '\n';
 			include_link(head_plurality, first, second, l, &skeleton);
-			skeleton_weight++;
+			skeleton_weight+=l.weight;
+
 		}
+
+		print_plurality(head_plurality);
 	}
+
+	// plural_p(head_plurality);
+
+	for( Link l : skeleton.links ) {
+		std::cout << "Link: " << l.name << '\n';
+	}
+
 
 	std::cout << "OSTOW WEIGHT: "<< skeleton_weight << '\n';
 	return skeleton;
@@ -350,23 +389,101 @@ Graph get_skeleton_prim ( Graph g ) {
 	Graph res_g;
 }
 
+Graph* set_test_graph ( Graph *my_graph ) {
+
+	Node *a = new Node();
+	Node *b = new Node();
+	Node *c = new Node();
+	Node *d = new Node();
+	Link *l1 = new Link();
+	Link *l2 = new Link();
+	Link *l3 = new Link();
+	Link *l4 = new Link();
+	Link *l5 = new Link();
+	Link *l6 = new Link();
+
+	a->name = "A";
+	b->name = "B";
+	c->name = "C";
+	d->name = "D";
+	a->linked_nodes_indexes.push_back(1);
+	a->linked_nodes_indexes.push_back(2);
+	b->linked_nodes_indexes.push_back(2);
+	c->linked_nodes_indexes.push_back(3);
+	d->linked_nodes_indexes.push_back(0);
+	d->linked_nodes_indexes.push_back(1);
+	// std::vector<int> linked_nodesA_indexes = [];
+	// std::vector<int> linked_nodesB_indexes = [];
+	// std::vector<int> linked_nodesC_indexes = [];
+
+	l1->name = "l1";
+	l2->name = "l2";
+	l3->name = "l3";
+	l4->name = "l4";
+	l5->name = "l5";
+	l6->name = "l6";
+
+	l1->weight = 1;
+	l2->weight = 2;
+	l3->weight = 3;
+	l4->weight = 4;
+	l5->weight = 5;
+	l6->weight = 6;
+
+	l1->left = a;
+	l1->right = b;
+
+	l2->left = b;
+	l2->right = c;
+
+	l3->left = c;
+	l3->right = d;
+
+	l4->left = d;
+	l4->right = a;
+
+	l5->left = a;
+	l5->right = c;
+
+	l6->left = d;
+	l6->right = b;
+
+
+	my_graph->name = "G";
+	my_graph->nodes.push_back(*a);
+	my_graph->nodes.push_back(*b);
+	my_graph->nodes.push_back(*c);
+	my_graph->nodes.push_back(*d);
+	my_graph->links.push_back(*l1);
+	my_graph->links.push_back(*l2);
+	my_graph->links.push_back(*l3);
+	my_graph->links.push_back(*l4);
+	my_graph->links.push_back(*l5);
+	my_graph->links.push_back(*l6);
+
+	return my_graph;
+}
+
 int main(int argc, char **argv) {
 
     system("clear");
 
 	std::cout << "/* Start */" << '\n';
 
-    Graph my_graph;
 
-    if (graph_init(&my_graph)) {
-        printf("\033[0;32m\n--------- GRAPH INITIALIZATION SUCCESS---------\033[0m\n\n");
-        print_graph(my_graph);
-    } else {
-        printf("SUCCESS\n");
-    }
 
-	get_skeleton_kruskal ( &my_graph );
+	Graph my_graph;
+	set_test_graph(&my_graph);
 
+    // if (graph_init(&my_graph)) {
+    //     printf("\033[0;32m\n--------- GRAPH INITIALIZATION SUCCESS---------\033[0m\n\n");
+    //     print_graph(my_graph);
+    // } else {
+    //     printf("SUCCESS\n");
+    // }
+
+	my_graph = get_skeleton_kruskal ( &my_graph );
+	print_graph(my_graph);
 
     return 0;
 }
