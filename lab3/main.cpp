@@ -9,129 +9,156 @@
 #include <limits.h>
 
 
-long factorial(int n) {
-	if ( n == 0 ) { return 1; }
-	return ( n * factorial(n - 1) );
+unsigned short get_processes () {
+	return (unsigned short)( rand() % 9 + 1 );
 }
 
-long power(long num, int degree) {
-	if (degree - 1 == 0) { return num; }
-	num *= power(num, degree - 1 );
-	return num;
-}
-
-long f_solver(int n) {
-	return power(2, n) * factorial( n - 1 );
-}
-
-/* ---------------- Task 1 ---------------- */
-
-struct Node {
-	char name;
-	Node *next;
-};
-
-struct Stack {
-	std::string name;
-	Node *head;
-};
-
-struct Res {
-	bool is_empty;
-	bool is_correct;
-	char character;
-
-	Res(bool e, bool c, char ch) {
-		is_empty = e;
-		is_correct = c;
-		character = ch;
-    }
-	Res() {
-		is_empty = false;
-		is_correct = false;
-		character = '\0';
-    }
-};
-
-// printf("is_empty: %d\n", s->head == NULL);
-bool is_empty( Stack *s ) { return s->head == NULL; }
-
-bool push ( char c, Stack *s ) {
-	//memory allocated using malloc
-	// printf("push\n");
-
-	Node *new_node=(Node*)malloc(sizeof(new_node));
-	new_node->name = c;
-	new_node->next = NULL;
-    if(new_node == NULL) { return false; }
-	if (s->head == NULL) {
-		s->head = new_node;
-		return true;
+std::vector<int> get_intervals ( unsigned short t_num ) {
+	std::vector<int> res;
+	for (size_t i = 0; i < t_num; i++) {
+		res.push_back( rand() % 9 + 1 );
 	}
-	new_node->next = s->head;
-	s->head = new_node;
-	return true;
+	return res;
 }
 
-Res pop ( Stack *s ) {
-	// if stack is empty
-	if ( s->head == NULL ) { return Res(true, false, '\0'); }
-	// if it is the last one
-	if ( s->head->next == NULL ) {
-		Res r = Res(true, true, s->head->name);
-		s->head = NULL;
-		return r;
+bool is_busy (std::vector<int> process, int time ) {
+	int process_t = 0;
+
+	for (int t : process)
+		process_t += t;
+
+	return process_t > time;
+ }
+
+ int get_longest (std::vector<std::vector<int> > pt_array) {
+	 int longest_time = INT_MIN;
+	 for ( std::vector<int> process : pt_array ) {
+		int process_t = 0;
+  		for (int interval : process) {
+  			process_t += interval;
+  		}
+		if (process_t > longest_time)
+			longest_time = process_t;
+  	}
+	return longest_time;
+ }
+
+ void p_print ( std::vector<std::vector<int> > pt_array ) {
+ 	int index = 0;
+ 	for ( std::vector<int> process : pt_array ) {
+ 		printf("P%d:", index);
+ 		for (int interval : process) {
+ 			for (size_t i = 0; i < interval; i++) {
+ 				printf("-");
+ 			}
+			printf("|");
+ 		}
+ 		index++;
+ 		printf("\n");
+ 	}
+ }
+
+unsigned short manage_time ( unsigned short p_num, std::vector<int> intervals ) {
+	std::vector<std::vector<int> > pt_array;
+
+	std::sort(intervals.begin(), intervals.end(), std::greater<int>());
+
+	for (size_t i = 0; i < p_num; i++)
+		pt_array.push_back(std::vector<int>());
+
+	int tic = 0;
+	int current = 0;
+	while (current < intervals.size()) {
+		for (size_t i = 0; i < pt_array.size(); i++) {
+			if (!is_busy(pt_array[i], tic)) {
+				pt_array[i].push_back(intervals[current]);
+				current++;
+			}
+		}
+		tic++;
 	}
-	s->head = s->head->next;
 
-	return Res(false, true, s->head->name);
+	p_print(pt_array);
+
+	return get_longest(pt_array);
 }
 
-Res expression_is_correct ( char *c, Stack *brackets, char prew ) {
-	Res r = Res();
-	// printf("%c\n", *c);
-	switch (*c) {
-		case '(':
-			// if expression is correct but stack is overloaded
-			if (!push(*c, brackets)) { return Res(true, true, '\0'); }
-			break;
-		case '*':
-			// if expression isn't correct, because invalid operator
-			if (*c == prew) { return Res(false, false, '\0'); }
-			break;
-		case '/':
-			// if expression isn't correct, because invalid operator
-			if (*c == prew) { return Res(false, false, '\0'); }
-			break;
-		case '+':
-			// if expression isn't correct, because invalid operator
-			if (*c == prew) { return Res(false, false, '\0'); }
-			break;
-		case ')':
-			// if expression isn't correct, because num of opened brackets isn't equal to closed
-			r = pop(brackets);
-			if (r.is_empty && !r.is_correct) { return Res(true, false, '\0'); }
-			break;
-		case '#':
-			// if it is last character
-		case 0:
-			// if it is last entered character
-			return Res(is_empty(brackets), is_empty(brackets), '\0');
-		default:
-			break;
+
+std::vector<int> get_packs ( int max_size ) {
+	std::vector<int> res;
+	int packs_amount = rand() % 50;
+	for (size_t i = 0; i < packs_amount; i++) {
+		res.push_back( rand() % max_size + 1 );
 	}
-	return expression_is_correct( c + 1, brackets, *c);
+	return res;
 }
 
-char* to_array(std::string s) {
-	char *e = (char*)malloc(sizeof(e) * (s.size() + 1));
-	s.copy(e, s.size() + 1);
-	e[s.size()] = '\0';
-	return e;
+unsigned short get_capacity () {
+	return (unsigned short)( rand() % 9 + 1 );
 }
 
-bool memory_clear(Stack *brackets) {
+bool is_fit ( std::vector<int> box, int pack_value, int box_capacity ) {
+	int box_value = 0;
 
+	for (int p : box)
+		box_value += p;
+
+	return (box_capacity - box_value) > pack_value;
+}
+
+void boxes_print ( std::vector<std::vector<int> > boxes_array, unsigned short box_capacity ) {
+   int index = 0;
+   for ( std::vector<int> box : boxes_array ) {
+	   printf("Box%d: |", index);
+
+	   int left = box_capacity;
+	   for (int pack_value : box) {
+		   for (size_t i = 0; i < pack_value; i++) {
+			   printf("/");
+			   left--;
+		   }
+		   printf("|");
+	   }
+	   for (size_t i = 0; i < left; i++) {
+		   printf(":");
+	   }
+	   printf("|");
+
+	   index++;
+	   printf("\n");
+   }
+}
+
+unsigned short get_boxes ( unsigned short box_capacity, std::vector<int> packs ) {
+
+	std::vector<std::vector<int> > boxes_array;
+
+	std::sort(packs.begin(), packs.end(), std::greater<int>());
+
+	boxes_array.push_back(std::vector<int>());
+
+	int current = 0;
+	while (current < packs.size()) {
+		bool found = false;
+		if (packs[current] > box_capacity) { return -1; }
+		for (size_t i = 0; i < boxes_array.size(); i++) {
+			if (is_fit(boxes_array[i], packs[current], box_capacity)) {
+				boxes_array[i].push_back(packs[current]);
+				found = true;
+				current++;
+				break;
+			}
+		}
+		if (!found) {
+			boxes_array.push_back(std::vector<int>());
+			boxes_array[(boxes_array.size() - 1)].push_back(packs[current]);
+			current++;
+		}
+	}
+
+	boxes_print ( boxes_array, box_capacity );
+
+	return boxes_array.size();
 }
 
 
@@ -139,44 +166,35 @@ int main(int argc, char **argv) {
 
     system("clear");
 
-	std::string str_exp;
-	std::string str_exp1 = "a+b+((c*d)\0";
-	std::string str_exp2 = "a+b+(c*d)\0";
-	std::string str_exp3 = "a+b+(c*d))\0";
-	Stack brackets = Stack();
-	Stack brackets1 = Stack();
-	Stack brackets2 = Stack();
-	Stack brackets3 = Stack();
+	std::cout << "\n========= Time manage task =========" << '\n';
 
-	std::cout << "Enter expresiion" << '\n';
-	std::cin >> str_exp;
-	char *expression = to_array(str_exp);
-	char *expression1 = to_array(str_exp1);
-	char *expression2 = to_array(str_exp2);
-	char *expression3 = to_array(str_exp3);
+	unsigned short p_num = get_processes();
 
-	std::cout << "Entered expression: ";
-	std::cout << expression << '\n';
-	std::cout << "Expression is " << (expression_is_correct(expression, &brackets, '\0' ).is_correct ? "\033[0;32m correct \033[0m" : "\033[0;31mnot correct\033[0m") << '\n';
+	std::vector<int> intervals = get_intervals(10);
 
-	std::cout << "Test expression1: ";
-	std::cout << expression1 << '\n';
-	std::cout << "Expression is " << (expression_is_correct(expression1, &brackets1, '\0' ).is_correct ? "\033[0;32m correct \033[0m" : "\033[0;31mnot correct\033[0m") << '\n';
+	std::cout << "Num processes: " << p_num << "\nIntervals values: " << '\n';
+	for(size_t i = 0; i < intervals.size(); i++)
+		std::cout << "Interval"<< i << " time : " << intervals[i] << '\n';
 
-	std::cout << "Test expression2: ";
-	std::cout << expression2 << '\n';
-	std::cout << "Expression is " << (expression_is_correct(expression2, &brackets2, '\0' ).is_correct ? "\033[0;32m correct \033[0m" : "\033[0;31mnot correct\033[0m") << '\n';
+	unsigned short time = manage_time(p_num, intervals);
 
-	std::cout << "Test expression3: ";
-	std::cout << expression3 << '\n';
-	std::cout << "Expression is " << (expression_is_correct(expression3, &brackets3, '\0' ).is_correct ? "\033[0;32m correct \033[0m" : "\033[0;31mnot correct\033[0m") << '\n';
+	std::cout << "Work time: " << time << '\n';
 
-	free(expression1);
-	free(expression2);
-	free(expression3);
-	// printf("num: %d\n", num);
-	// num = f_solver(5);
-	// printf("num: %d\n", num);
+	std::cout << "\n========= Box task =========" << '\n';
+
+	unsigned short box_capacity = get_capacity();
+
+	std::cout << "Box capacity: " << box_capacity << '\n';
+
+	std::vector<int> packs = get_packs( box_capacity - 1 );
+
+	std::cout << "Packs values: " << '\n';
+	for(size_t i = 0; i < packs.size(); i++)
+		std::cout << "Pack"<< i << " value : " << packs[i] << '\n';
+
+	unsigned short boxes_amount = get_boxes(box_capacity, packs);
+
+	std::cout << "Amount of boxes : " << boxes_amount << '\n';
 
 
     return 0;
