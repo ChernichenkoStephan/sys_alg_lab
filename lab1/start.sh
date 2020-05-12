@@ -8,4 +8,8 @@ clear
 
 # task 2
 
-g++ -w -o test2 main.cpp && ./test2
+g++ -w -o test2 main.cpp Shell/shell.cpp TopologicalSort/topological_sort.cpp BinaryTreeSearch/binary_tree_search.cpp KMPSearch/kmp_search.cpp PolarRand/polar_rand.cpp && ./test2
+
+
+# mkdir PolarRand
+# touch PolarRand/polar_rand.cpp PolarRand/polar_rand.h
